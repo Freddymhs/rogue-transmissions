@@ -1,0 +1,13 @@
+# Secrets / runtime state
+.blizzard-cookie
+.last-hash
+.fetch.log
+.probes.log
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS
+.DS_Store

@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>StarCraft ARG · Bitácora</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg-deep:    #050810;
+    --bg-panel:   #0a0f1a;
+    --bg-elev:    #0f141f;
+    --line:       #1a2230;
+    --text:       #d4dae4;
+    --text-dim:   #7a8090;
+    --cyan:       #4dd9ff;
+    --cyan-deep:  #1a8aa8;
+    --magenta:    #c026d3;
+    --violet:     #7c3aed;
+    --lime:       #84cc16;
+    --teal:       #22d3ee;
+    --amber:      #fbbf24;
+    --green:      #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(124,58,237,.10), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 90% 30%, rgba(192,38,211,.08), transparent 60%),
+      radial-gradient(ellipse 70% 40% at 50% 90%, rgba(34,211,238,.05), transparent 60%),
+      var(--bg-deep);
+    color: var(--text);
+    max-width: 880px; margin: 0 auto; padding: 2.5rem 1.5rem;
+    line-height: 1.65; font-size: .95rem;
+    min-height: 100vh;
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1.5rem; margin-bottom: 3rem;
+    position: relative;
+  }
+  header::after {
+    content: ''; position: absolute; left: 0; bottom: -1px;
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+  }
+  h1 {
+    color: var(--cyan);
+    margin: 0 0 .35rem; font-size: 1.6rem;
+    text-shadow: 0 0 12px rgba(77,217,255,.35);
+  }
+  .sub { color: var(--text-dim); font-size: .85rem; }
+
+  .log { position: relative; padding-left: 2rem; }
+  .log::before {
+    content: ''; position: absolute; left: .5rem; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--cyan-deep) 30%, var(--magenta) 70%, transparent);
+    opacity: .35;
+  }
+  .note { position: relative; margin-bottom: 2.5rem; padding-bottom: .5rem; }
+  .note::before {
+    content: ''; position: absolute; left: -2rem; top: .55rem;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
+  }
+  .note.found::before     { background: var(--lime);    box-shadow: 0 0 8px var(--lime); }
+  .note.verified::before   { background: var(--teal);    box-shadow: 0 0 8px var(--teal); }
+  .note.hypothesis::before { background: var(--magenta); box-shadow: 0 0 8px var(--magenta); }
+  .note p { margin: 0 0 .75rem; }
+
+  .when {
+    color: var(--text-dim); font-size: .8rem; margin-bottom: .35rem;
+    display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+  }
+  .when .badge {
+    background: rgba(77,217,255,.08); color: var(--cyan);
+    border: 1px solid rgba(77,217,255,.18);
+    padding: 1px 7px; border-radius: 3px; font-size: .72rem;
+  }
+  .when .badge.found     { background: rgba(132,204,22,.10); color: var(--lime);    border-color: rgba(132,204,22,.25); }
+  .when .badge.verified   { background: rgba(34,211,238,.10); color: var(--teal);    border-color: rgba(34,211,238,.25); }
+  .when .badge.hypothesis { background: rgba(192,38,211,.10); color: var(--magenta); border-color: rgba(192,38,211,.25); }
+
+  h3 { color: var(--text); margin: 0 0 .6rem; font-size: 1.05rem; font-weight: 600; }
+
+  pre {
+    background: rgba(0,0,0,.45);
+    border: 1px solid var(--line);
+    padding: .9rem 1rem; border-radius: 4px;
+    font-size: .82rem; line-height: 1.5; margin: .5rem 0 .75rem;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  pre.binary   { color: var(--lime);    border-left: 3px solid var(--lime); }
+  pre.json     { color: var(--cyan);    border-left: 3px solid var(--cyan); }
+  pre.memo     { color: var(--text);    border-left: 3px solid var(--text-dim); }
+  pre.sensor   { color: var(--amber);   border-left: 3px solid var(--amber); }
+  pre.medical  { color: var(--magenta); border-left: 3px solid var(--magenta); }
+
+  code {
+    background: rgba(77,217,255,.08); padding: 1px 5px; border-radius: 3px;
+    font-size: .85em; color: var(--cyan);
+  }
+  code.url { color: var(--amber); }
+
+  ul.tight { margin: .35rem 0 .75rem; padding-left: 1.25rem; }
+  ul.tight li { margin: .15rem 0; color: var(--text-dim); }
+  ul.tight li code { font-size: .8em; }
+
+  section { margin-top: 3rem; }
+  section h2 {
+    color: var(--cyan); font-size: .85rem; text-transform: uppercase;
+    letter-spacing: .15em; margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--line); padding-bottom: .5rem;
+  }
+
+  .note-inline {
+    color: var(--text-dim); font-style: italic; font-size: .85rem;
+    display: block; margin-top: .35rem;
+  }
+
+  .day {
+    margin-bottom: 1rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg-panel);
+  }
+  .day > summary {
+    list-style: none; cursor: pointer;
+    padding: .9rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--line);
+    border-radius: 6px 6px 0 0;
+    user-select: none;
+  }
+  .day > summary::-webkit-details-marker { display: none; }
+  .day > summary::before {
+    content: '▸'; color: var(--cyan);
+    transition: transform .15s; font-size: .9rem;
+    width: 1rem; display: inline-block;
+  }
+  .day[open] > summary::before { transform: rotate(90deg); }
+  .day > summary:hover { background: #131a28; }
+  .day .day-date {
+    color: var(--cyan); font-weight: 600; font-size: 1rem;
+    letter-spacing: .02em;
+    text-shadow: 0 0 8px rgba(77,217,255,.35);
+  }
+  .day .day-meta { color: var(--text-dim); font-size: .8rem; margin-left: auto; }
+  .day .log { padding: 1.5rem 1rem 1rem 2rem; }
+
+  .global-hypothesis {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(124,58,237,.08), rgba(192,38,211,.04));
+    border: 1px solid rgba(192,38,211,.25);
+    border-radius: 6px;
+  }
+  .global-hypothesis h2 {
+    color: var(--magenta); font-size: 1rem;
+    text-transform: uppercase; letter-spacing: .15em;
+    margin-bottom: .5rem; border: 0; padding: 0;
+    display: flex; gap: .75rem; align-items: center;
+  }
+  .global-hypothesis .ai-tag {
+    background: rgba(192,38,211,.15); color: var(--magenta);
+    border: 1px solid rgba(192,38,211,.3);
+    padding: 2px 8px; border-radius: 3px;
+    font-size: .65rem; font-weight: bold; letter-spacing: .05em;
+  }
+  .global-hypothesis .ai-note {
+    color: var(--text-dim); font-size: .82rem; font-style: italic;
+    margin-bottom: 1rem;
+  }
+  .global-hypothesis ul { list-style: none; padding: 0; }
+  .global-hypothesis li { margin-bottom: .75rem; color: var(--text); }
+  .global-hypothesis li strong { color: var(--magenta); margin-right: .5rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>★ StarCraft: Remastered ARG · Bitácora</h1>
+  <div class="sub">endpoint <code>/en-us/partial-capture</code> · transmission <span id="transmission">01</span></div>
+</header>
+
+<!-- BEGIN_DAYS -->
+<details class="day" open>
+  <summary>
+    <span class="day-date">2026-09-04</span>
+    <span class="day-meta">8 entradas · transmission 01</span>
+  </summary>
+  <div class="log">
+    <div class="note plain">
+  <div class="when"><span>18:00</span><span class="badge ">arranque</span></div>
+  <p>Captura sobre <code class="url">starcraft.blizzard.com/en-us</code>.</p>
+</div>
+    <div class="note found">
+  <div class="when"><span>18:00</span><span class="badge found">hallazgo #1</span></div>
+  <h3>Aparece un binary blob en la consola</h3>
+  <p>Al cargar la página, la consola escupe un bloque gigante de ceros y unos en rojo. Es puro ASCII en grupos de 8 bits.</p><p>Decodificado dice:</p><pre class="memo">&gt;&gt;Run systems check.
+
+&gt;&gt;
+INVALID CREDENTIALS
+
+&gt;&gt;Username: 2560037-DA
+
+&gt;&gt;Password: XXXXXXXXXXXXXXXX
+
+&gt;&gt;ERROR
+&gt;&gt;USER FLAGGED
+
+&gt;&gt;CONTACT DOMINION SERVICE DESK IMMEDIATELY</pre><p class="note-inline">Alguien con credencial <code>2560037-DA</code> (formato Terran, XXXXXXX-XX) entró a un sistema clasificado y fue marcado. "Dominion" = facción humana.</p>
+</div>
+    <div class="note found">
+  <div class="when"><span>18:10</span><span class="badge found">hallazgo #2</span></div>
+  <h3>El endpoint entrega un transmission log</h3>
+  <p>Cuatro mensajes independientes más una tabla:</p><pre class="json">{
+  "status": 200,
+  "message": "CONNECTION SUCCESSFUL",
+  "data": {
+    "transmission": "01",
+    "messages": [
+      "00111110 00111110 01010010 ...",   ← binary largo (memo)
+      "&gt;SENSOR FEED: 7400 EAST
+&gt;MOTION DETECTED ...",
+      "████████: T. K████████
+DATE: 2575-08-1107:14
+BP: 110/70 ...",
+      "&gt;User: 2560037-DA
+&gt;Clearance level: L
+&gt;Searching ..."
+    ],
+    "type": "table",
+    "title": "CARGO MANIFEST",
+    "rows": [...]
+  }
+}</pre><p class="note-inline"><code>transmission: "01"</code> = episodio 1. Si en un refetch cambia a <code>"02"</code>, hay contenido nuevo.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>18:15</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 1 — sensor de movimiento</h3>
+  <pre class="sensor">&gt;SENSOR FEED: 7400 EAST
+&gt;MOTION DETECTED
+&gt;FREQUENCY: TRANSIENT MOTION PATTERN
+&gt;OCCUPANTS REGISTERED ....... 0
+&gt;OCCUPANTS DETECTED ........ 14
+&gt;RECONCILING...
+&gt;OCCUPANTS REGISTERED ....... 0
+&gt;POWER: DEACTIVATED (POWER GRID: 2%)</pre><p class="note-inline">Ala 7400 EAST. Catorce seres detectados, cero registrados. Red eléctrica al 2%. O el complejo está abandonado o está pasando algo que no debería.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>18:15</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 2 — registro médico</h3>
+  <pre class="medical">████████: T. K████████
+DATE: 2575-08-1107:14
+BLOOD PRESSURE: 110/70 mmHg
+HEART RATE: 84 bpm
+RESPIRATORY RATE: 16 breaths per minute
+BODY TEMPERATURE: 97.8°F
+OXYGEN SATURATION: 97% on room air
+STATUS: ████████</pre><p class="note-inline">Iniciales <code>T. K.</code> + 8 chars. El status está tapado. Tiene febrícula (97.8°F).</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>18:15</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 3 — handshake de clearance</h3>
+  <pre class="memo">&gt;User: 2560037-DA
+&gt;Clearance level: L
+&gt;Searching communications database...
+&gt;Transmission: recovered.
+
+&gt;Establishing connection...
+&gt;Connection: secured
+
+&gt;Uploading transmission...
+&gt;Transmission: uploaded.</pre><p class="note-inline">Mismo <code>2560037-DA</code> del primer binary. Clearance <strong>L</strong> = el más bajo de la escala militar Terran.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>18:20</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 0 — el memo (la pieza central)</h3>
+  <pre class="memo">FROM:    1SG S████████ V█████
+SENT:    2575-08-08-2601:18
+TO:      ROXARA LUNAR MINING COMPLEX — OPERATIONS
+SUBJECT: ███ THETA SQUADRON - ARRIVAL PROTOCOL
+
+CONFIDENTIAL — DO NOT SHARE
+
+ATTN. ROXARA LUNAR MINING COMPLEX,
+
+Theta Squadron is en route, anticipate arrival to Roxara on
+2575-08-09-███████. A ███████████████ Freighter will arrive
+in advance of Theta Squadron. Prepare docking accommodations.
+
+Our work must begin immediately upon landing. Ensure cargo
+manifest below is on board. Failure to indicate inconsistencies
+will not be tolerated.
+
+Take utmost caution when handling the crates. Pivotal to
+research. Carelessness may affect the success of our operation.
+
+For the Glory of the ████████.
+
+S. V█████
+12974-S</pre><p class="note-inline">Sargento Primero (<code>1SG</code>) del Terran Dominion avisa al complejo minero lunar <strong>Roxara</strong> que va a llegar el Escuadrón Theta. "Cajas pivotales para la investigación". Año 2575.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>18:20</span><span class="badge ">contenido</span></div>
+  <h3>Cargo manifest</h3>
+  <ul class="tight"><li><code>BANSHEE ███████</code> · Orders 556-217</li><li><code>Crates ████</code> · ID <code>X██████████</code></li><li><code>███████████████</code> · ID <code>D492-12-125</code></li><li>Rations (2127 unidades) · ID <code>R812-09-234</code></li><li><code>█████████████████</code> · ID <code>G620-17-448</code></li><li>Electronics (745 unidades) · ID <code>E632-84-306</code></li><li>Feed <code>█████</code> · ID <code>X██████████</code></li><li><strong>Items loaded: 4762</strong></li></ul><p class="note-inline"><em>Feed</em> + <em>Crates</em> + <em>Research</em>.</p>
+</div>
+  </div>
+</details>
+<details class="day">
+  <summary>
+    <span class="day-date">2026-09-05</span>
+    <span class="day-meta">sin entradas</span>
+  </summary>
+</details>
+<!-- END_DAYS -->
+
+<section>
+  <h2>Lo que no sabemos todavía</h2>
+  <ul>
+    <!-- BEGIN_MYSTERY -->
+    <li>Quién es <code>T. K████████</code> (paciente) y <code>S████ V█████</code> (firmante)</li>
+    <li>Qué es realmente "Roxara Lunar Mining Complex" — no aparece en ningún juego publicado</li>
+<!-- END_MYSTERY -->
+  </ul>
+</section>
+
+<section class="global-hypothesis">
+  <h2>Hipótesis <span class="ai-tag">generada por IA</span></h2>
+  <p class="ai-note">Estas hipótesis las formula un modelo de lenguaje a partir del
+  contenido descubierto. No son oficiales ni verificadas.</p>
+  <ul>
+    <!-- BEGIN_HYPOTHESIS -->
+    <li><strong>H1 (70%):</strong> ARG oficial para un título nuevo de StarCraft. Año 2575 está muy adelante del canon publicado.</li>
+    <li><strong>H3 (25%):</strong> ARG genérico sobre el template que la compañía reusa en todas sus páginas.</li>
+    <li><strong>H2 (5%):</strong> Promo de aniversario para Remastered.</li>
+<!-- END_HYPOTHESIS -->
+  </ul>
+</section>
+
+</body>
+</html>

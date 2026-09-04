@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>StarCraft ARG · Bitácora</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg-deep:    #050810;
+    --bg-panel:   #0a0f1a;
+    --bg-elev:    #0f141f;
+    --line:       #1a2230;
+    --text:       #d4dae4;
+    --text-dim:   #7a8090;
+    --cyan:       #4dd9ff;
+    --cyan-deep:  #1a8aa8;
+    --magenta:    #c026d3;
+    --violet:     #7c3aed;
+    --lime:       #84cc16;
+    --teal:       #22d3ee;
+    --amber:      #fbbf24;
+    --green:      #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(124,58,237,.10), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 90% 30%, rgba(192,38,211,.08), transparent 60%),
+      radial-gradient(ellipse 70% 40% at 50% 90%, rgba(34,211,238,.05), transparent 60%),
+      var(--bg-deep);
+    color: var(--text);
+    max-width: 880px; margin: 0 auto; padding: 2.5rem 1.5rem;
+    line-height: 1.65; font-size: .95rem;
+    min-height: 100vh;
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1.5rem; margin-bottom: 3rem;
+    position: relative;
+  }
+  header::after {
+    content: ''; position: absolute; left: 0; bottom: -1px;
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+  }
+  h1 {
+    color: var(--cyan);
+    margin: 0 0 .35rem; font-size: 1.6rem;
+    text-shadow: 0 0 12px rgba(77,217,255,.35);
+  }
+  .sub { color: var(--text-dim); font-size: .85rem; }
+
+  .log { position: relative; padding-left: 2rem; }
+  .log::before {
+    content: ''; position: absolute; left: .5rem; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--cyan-deep) 30%, var(--magenta) 70%, transparent);
+    opacity: .35;
+  }
+  .note { position: relative; margin-bottom: 2.5rem; padding-bottom: .5rem; }
+  .note::before {
+    content: ''; position: absolute; left: -2rem; top: .55rem;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
+  }
+  .note.found::before     { background: var(--lime);    box-shadow: 0 0 8px var(--lime); }
+  .note.verified::before   { background: var(--teal);    box-shadow: 0 0 8px var(--teal); }
+  .note.hypothesis::before { background: var(--magenta); box-shadow: 0 0 8px var(--magenta); }
+  .note p { margin: 0 0 .75rem; }
+
+  .when {
+    color: var(--text-dim); font-size: .8rem; margin-bottom: .35rem;
+    display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+  }
+  .when .badge {
+    background: rgba(77,217,255,.08); color: var(--cyan);
+    border: 1px solid rgba(77,217,255,.18);
+    padding: 1px 7px; border-radius: 3px; font-size: .72rem;
+  }
+  .when .badge.found     { background: rgba(132,204,22,.10); color: var(--lime);    border-color: rgba(132,204,22,.25); }
+  .when .badge.verified   { background: rgba(34,211,238,.10); color: var(--teal);    border-color: rgba(34,211,238,.25); }
+  .when .badge.hypothesis { background: rgba(192,38,211,.10); color: var(--magenta); border-color: rgba(192,38,211,.25); }
+
+  h3 { color: var(--text); margin: 0 0 .6rem; font-size: 1.05rem; font-weight: 600; }
+
+  pre {
+    background: rgba(0,0,0,.45);
+    border: 1px solid var(--line);
+    padding: .9rem 1rem; border-radius: 4px;
+    font-size: .82rem; line-height: 1.5; margin: .5rem 0 .75rem;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  pre.binary   { color: var(--lime);    border-left: 3px solid var(--lime); }
+  pre.json     { color: var(--cyan);    border-left: 3px solid var(--cyan); }
+  pre.memo     { color: var(--text);    border-left: 3px solid var(--text-dim); }
+  pre.sensor   { color: var(--amber);   border-left: 3px solid var(--amber); }
+  pre.medical  { color: var(--magenta); border-left: 3px solid var(--magenta); }
+
+  code {
+    background: rgba(77,217,255,.08); padding: 1px 5px; border-radius: 3px;
+    font-size: .85em; color: var(--cyan);
+  }
+  code.url { color: var(--amber); }
+
+  ul.tight { margin: .35rem 0 .75rem; padding-left: 1.25rem; }
+  ul.tight li { margin: .15rem 0; color: var(--text-dim); }
+  ul.tight li code { font-size: .8em; }
+
+  section { margin-top: 3rem; }
+  section h2 {
+    color: var(--cyan); font-size: .85rem; text-transform: uppercase;
+    letter-spacing: .15em; margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--line); padding-bottom: .5rem;
+  }
+
+  .note-inline {
+    color: var(--text-dim); font-style: italic; font-size: .85rem;
+    display: block; margin-top: .35rem;
+  }
+
+  .day {
+    margin-bottom: 1rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg-panel);
+  }
+  .day > summary {
+    list-style: none; cursor: pointer;
+    padding: .9rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--line);
+    border-radius: 6px 6px 0 0;
+    user-select: none;
+  }
+  .day > summary::-webkit-details-marker { display: none; }
+  .day > summary::before {
+    content: '▸'; color: var(--cyan);
+    transition: transform .15s; font-size: .9rem;
+    width: 1rem; display: inline-block;
+  }
+  .day[open] > summary::before { transform: rotate(90deg); }
+  .day > summary:hover { background: #131a28; }
+  .day .day-date {
+    color: var(--cyan); font-weight: 600; font-size: 1rem;
+    letter-spacing: .02em;
+    text-shadow: 0 0 8px rgba(77,217,255,.35);
+  }
+  .day .day-meta { color: var(--text-dim); font-size: .8rem; margin-left: auto; }
+  .day .log { padding: 1.5rem 1rem 1rem 2rem; }
+
+  .global-hypothesis {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(124,58,237,.08), rgba(192,38,211,.04));
+    border: 1px solid rgba(192,38,211,.25);
+    border-radius: 6px;
+  }
+  .global-hypothesis h2 {
+    color: var(--magenta); font-size: 1rem;
+    text-transform: uppercase; letter-spacing: .15em;
+    margin-bottom: .5rem; border: 0; padding: 0;
+    display: flex; gap: .75rem; align-items: center;
+  }
+  .global-hypothesis .ai-tag {
+    background: rgba(192,38,211,.15); color: var(--magenta);
+    border: 1px solid rgba(192,38,211,.3);
+    padding: 2px 8px; border-radius: 3px;
+    font-size: .65rem; font-weight: bold; letter-spacing: .05em;
+  }
+  .global-hypothesis .ai-note {
+    color: var(--text-dim); font-size: .82rem; font-style: italic;
+    margin-bottom: 1rem;
+  }
+  .global-hypothesis ul { list-style: none; padding: 0; }
+  .global-hypothesis li { margin-bottom: .75rem; color: var(--text); }
+  .global-hypothesis li strong { color: var(--magenta); margin-right: .5rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>★ StarCraft: Remastered ARG · Bitácora</h1>
+  <div class="sub">endpoint <code>/en-us/partial-capture</code> · transmission <span id="transmission">--</span></div>
+</header>
+
+<!-- BEGIN_DAYS -->
+<!-- END_DAYS -->
+
+<section>
+  <h2>Lo que no sabemos todavía</h2>
+  <ul>
+    <!-- BEGIN_MYSTERY -->
+    <!-- END_MYSTERY -->
+  </ul>
+</section>
+
+<section class="global-hypothesis">
+  <h2>Hipótesis <span class="ai-tag">generada por IA</span></h2>
+  <p class="ai-note">Estas hipótesis las formula un modelo de lenguaje a partir del
+  contenido descubierto. No son oficiales ni verificadas.</p>
+  <ul>
+    <!-- BEGIN_HYPOTHESIS -->
+    <!-- END_HYPOTHESIS -->
+  </ul>
+</section>
+
+</body>
+</html>

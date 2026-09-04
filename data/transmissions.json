@@ -1,0 +1,82 @@
+{
+  "days": [
+    {
+      "date": "2026-09-04",
+      "open": true,
+      "transmission": "01",
+      "entries": [
+        {
+          "time": "18:00",
+          "type": "plain",
+          "label": "arranque",
+          "title": null,
+          "body_html": "<p>Captura sobre <code class=\"url\">starcraft.blizzard.com/en-us</code>.</p>"
+        },
+        {
+          "time": "18:00",
+          "type": "found",
+          "label": "hallazgo #1",
+          "title": "Aparece un binary blob en la consola",
+          "body_html": "<p>Al cargar la página, la consola escupe un bloque gigante de ceros y unos en rojo. Es puro ASCII en grupos de 8 bits.</p><p>Decodificado dice:</p><pre class=\"memo\">&gt;&gt;Run systems check.\n\n&gt;&gt;\nINVALID CREDENTIALS\n\n&gt;&gt;Username: 2560037-DA\n\n&gt;&gt;Password: XXXXXXXXXXXXXXXX\n\n&gt;&gt;ERROR\n&gt;&gt;USER FLAGGED\n\n&gt;&gt;CONTACT DOMINION SERVICE DESK IMMEDIATELY</pre><p class=\"note-inline\">Alguien con credencial <code>2560037-DA</code> (formato Terran, XXXXXXX-XX) entró a un sistema clasificado y fue marcado. \"Dominion\" = facción humana.</p>"
+        },
+        {
+          "time": "18:10",
+          "type": "found",
+          "label": "hallazgo #2",
+          "title": "El endpoint entrega un transmission log",
+          "body_html": "<p>Cuatro mensajes independientes más una tabla:</p><pre class=\"json\">{\n  \"status\": 200,\n  \"message\": \"CONNECTION SUCCESSFUL\",\n  \"data\": {\n    \"transmission\": \"01\",\n    \"messages\": [\n      \"00111110 00111110 01010010 ...\",   ← binary largo (memo)\n      \"&gt;SENSOR FEED: 7400 EAST\\n&gt;MOTION DETECTED ...\",\n      \"████████: T. K████████\\nDATE: 2575-08-1107:14\\nBP: 110/70 ...\",\n      \"&gt;User: 2560037-DA\\n&gt;Clearance level: L\\n&gt;Searching ...\"\n    ],\n    \"type\": \"table\",\n    \"title\": \"CARGO MANIFEST\",\n    \"rows\": [...]\n  }\n}</pre><p class=\"note-inline\"><code>transmission: \"01\"</code> = episodio 1. Si en un refetch cambia a <code>\"02\"</code>, hay contenido nuevo.</p>"
+        },
+        {
+          "time": "18:15",
+          "type": "plain",
+          "label": "contenido",
+          "title": "Mensaje 1 — sensor de movimiento",
+          "body_html": "<pre class=\"sensor\">&gt;SENSOR FEED: 7400 EAST\n&gt;MOTION DETECTED\n&gt;FREQUENCY: TRANSIENT MOTION PATTERN\n&gt;OCCUPANTS REGISTERED ....... 0\n&gt;OCCUPANTS DETECTED ........ 14\n&gt;RECONCILING...\n&gt;OCCUPANTS REGISTERED ....... 0\n&gt;POWER: DEACTIVATED (POWER GRID: 2%)</pre><p class=\"note-inline\">Ala 7400 EAST. Catorce seres detectados, cero registrados. Red eléctrica al 2%. O el complejo está abandonado o está pasando algo que no debería.</p>"
+        },
+        {
+          "time": "18:15",
+          "type": "plain",
+          "label": "contenido",
+          "title": "Mensaje 2 — registro médico",
+          "body_html": "<pre class=\"medical\">████████: T. K████████\nDATE: 2575-08-1107:14\nBLOOD PRESSURE: 110/70 mmHg\nHEART RATE: 84 bpm\nRESPIRATORY RATE: 16 breaths per minute\nBODY TEMPERATURE: 97.8°F\nOXYGEN SATURATION: 97% on room air\nSTATUS: ████████</pre><p class=\"note-inline\">Iniciales <code>T. K.</code> + 8 chars. El status está tapado. Tiene febrícula (97.8°F).</p>"
+        },
+        {
+          "time": "18:15",
+          "type": "plain",
+          "label": "contenido",
+          "title": "Mensaje 3 — handshake de clearance",
+          "body_html": "<pre class=\"memo\">&gt;User: 2560037-DA\n&gt;Clearance level: L\n&gt;Searching communications database...\n&gt;Transmission: recovered.\n\n&gt;Establishing connection...\n&gt;Connection: secured\n\n&gt;Uploading transmission...\n&gt;Transmission: uploaded.</pre><p class=\"note-inline\">Mismo <code>2560037-DA</code> del primer binary. Clearance <strong>L</strong> = el más bajo de la escala militar Terran.</p>"
+        },
+        {
+          "time": "18:20",
+          "type": "plain",
+          "label": "contenido",
+          "title": "Mensaje 0 — el memo (la pieza central)",
+          "body_html": "<pre class=\"memo\">FROM:    1SG S████████ V█████\nSENT:    2575-08-08-2601:18\nTO:      ROXARA LUNAR MINING COMPLEX — OPERATIONS\nSUBJECT: ███ THETA SQUADRON - ARRIVAL PROTOCOL\n\nCONFIDENTIAL — DO NOT SHARE\n\nATTN. ROXARA LUNAR MINING COMPLEX,\n\nTheta Squadron is en route, anticipate arrival to Roxara on\n2575-08-09-███████. A ███████████████ Freighter will arrive\nin advance of Theta Squadron. Prepare docking accommodations.\n\nOur work must begin immediately upon landing. Ensure cargo\nmanifest below is on board. Failure to indicate inconsistencies\nwill not be tolerated.\n\nTake utmost caution when handling the crates. Pivotal to\nresearch. Carelessness may affect the success of our operation.\n\nFor the Glory of the ████████.\n\nS. V█████\n12974-S</pre><p class=\"note-inline\">Sargento Primero (<code>1SG</code>) del Terran Dominion avisa al complejo minero lunar <strong>Roxara</strong> que va a llegar el Escuadrón Theta. \"Cajas pivotales para la investigación\". Año 2575.</p>"
+        },
+        {
+          "time": "18:20",
+          "type": "plain",
+          "label": "contenido",
+          "title": "Cargo manifest",
+          "body_html": "<ul class=\"tight\"><li><code>BANSHEE ███████</code> · Orders 556-217</li><li><code>Crates ████</code> · ID <code>X██████████</code></li><li><code>███████████████</code> · ID <code>D492-12-125</code></li><li>Rations (2127 unidades) · ID <code>R812-09-234</code></li><li><code>█████████████████</code> · ID <code>G620-17-448</code></li><li>Electronics (745 unidades) · ID <code>E632-84-306</code></li><li>Feed <code>█████</code> · ID <code>X██████████</code></li><li><strong>Items loaded: 4762</strong></li></ul><p class=\"note-inline\"><em>Feed</em> + <em>Crates</em> + <em>Research</em>.</p>"
+        }
+      ]
+    },
+    {
+      "date": "2026-09-05",
+      "open": false,
+      "transmission": null,
+      "entries": []
+    }
+  ],
+  "mystery": [
+    "Quién es <code>T. K████████</code> (paciente) y <code>S████ V█████</code> (firmante)",
+    "Qué es realmente \"Roxara Lunar Mining Complex\" — no aparece en ningún juego publicado"
+  ],
+  "hypothesis": [
+    {"label": "H1", "pct": 70, "text": "ARG oficial para un título nuevo de StarCraft. Año 2575 está muy adelante del canon publicado."},
+    {"label": "H3", "pct": 25, "text": "ARG genérico sobre el template que la compañía reusa en todas sus páginas."},
+    {"label": "H2", "pct": 5, "text": "Promo de aniversario para Remastered."}
+  ]
+}

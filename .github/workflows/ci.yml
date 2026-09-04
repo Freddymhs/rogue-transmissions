@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run tests
+        run: python3 -m pytest tests/ -v
+
+      - name: Regenerate index.html
+        run: python3 render.py
+
+      - name: Check render output matches committed
+        run: |
+          if ! git diff --quiet -- index.html; then
+            echo "::error::render output differs from committed index.html"
+            echo "Run 'make render' locally and commit the result."
+            exit 1
+          fi
