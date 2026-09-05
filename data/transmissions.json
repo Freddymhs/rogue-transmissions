@@ -65,9 +65,38 @@
     },
     {
       "date": "2026-09-05",
-      "open": false,
+      "open": true,
       "transmission": null,
-      "entries": []
+      "entries": [
+        {
+          "time": "21:50",
+          "type": "found",
+          "label": "hallazgo #3",
+          "title": "Endpoint interno polled por la página",
+          "body_html": "<p>Durante la carga de <code class=\"url\">starcraft.blizzard.com/es-es/</code>, la página hace <strong>20+ requests</strong> a <code>/es-es/internal-node-trace</code> (cada pocos segundos). HTTP 200 + body <code>application/json</code> 56 bytes:</p><pre class=\"memo\">{\"status\":404,\"message\":\"CONNECTION BREACHED\",\"data\":{}}</pre><p class=\"note-inline\">\"CONNECTION BREACHED\" es jerga del UI de StarCraft (cuando las comunicaciones se cortan). El JSON trae <code>status:404</code> adentro aunque el HTTP sea 200 — parece decir \"conexión OK, pero no hay contenido nuevo ahora\". Endpoint temático, no heartbeat genérico.</p>"
+        },
+        {
+          "time": "21:50",
+          "type": "found",
+          "label": "hallazgo #4",
+          "title": "localStorage[internal-node-trace] poblado",
+          "body_html": "<p>La página escribe en <code>localStorage[\"internal-node-trace\"]</code> el timestamp del último poll. Pre-carga muestra una entrada que sobrevive al reload. La clave tiene el mismo nombre que el endpoint — confirma que el flujo <code>trace → cache local</code> es parte del comportamiento esperado, no un leak.</p>"
+        },
+        {
+          "time": "21:50",
+          "type": "found",
+          "label": "hallazgo #5",
+          "title": "VT323 preloaded pero unused",
+          "body_html": "<p>La página preloadea <code class=\"url\">fonts.googleapis.com/css2?family=VT323</code> (pixel-font retro estilo terminal) pero en la carga actual NO se usa en ningún elemento del DOM. Queda \"armada\" — sugiere que se va a activar cuando aparezca cierto estado ARG (event-driven, todavía no disparado).</p>"
+        },
+        {
+          "time": "21:50",
+          "type": "found",
+          "label": "hallazgo #6",
+          "title": "Elemento transient \"Incoming Transmission...\"",
+          "body_html": "<p>En una corrida anterior (con timeout de <code>networkidle</code> ~30s), un <code>browser_snapshot</code> capturó un elemento <code>- generic: Incoming Transmission...</code> en el DOM. Después desapareció. No aparece en el HTML estático con JS bloqueado → lo inyecta JS en runtime. Probablemente YouTube embed loading state (\"Live\") o un placeholder ARG que se activa en ciertos momentos.</p><p class=\"note-inline\">Re-navegaciones a 25s no lo recapturan. El elemento es intermitente, no persistente.</p>"
+        }
+      ]
     }
   ],
   "mystery": [
