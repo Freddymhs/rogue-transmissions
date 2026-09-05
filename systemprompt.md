@@ -4,43 +4,33 @@
 > `/en-us/partial-capture` de `starcraft.blizzard.com/en-us/`.
 > Append-only. SSOT = `data/transmissions.json`. Output = `index.html` regenerado.
 
-**Estado actual: site NO publicado.** Repo local existe (`~/starcraft-arg/`),
-sin remote, sin GitHub Pages. Antes del primer run, ver §Pre-loop setup.
+**Estado actual: site publicado.** Repo `Freddymhs/rogue-transmissions`,
+GitHub Pages activo en `https://freddymhs.github.io/rogue-transmissions/`.
 
 ---
 
 ## Pre-loop setup (una vez)
 
 ```bash
-# 1. Repo GitHub (elegí nombre + visibility)
-gh repo create starcraft-arg --public --source=. --remote=origin --push
-# Si gh no autenticado, manual:
-#   ir a github.com/new → crear repo → git remote add origin <url>
+# 1. Repo GitHub — ya creado (rogue-transmissions)
+gh repo create rogue-transmissions --public --source=. --remote=origin --push
+# (ya hecho)
 
-# 2. Activar GitHub Pages
-#    github.com/<user>/starcraft-arg → Settings → Pages
+# 2. GitHub Pages — ya activado
+#    github.com/Freddymhs/rogue-transmissions → Settings → Pages
 #    Source: "Deploy from a branch" → Branch: main → Folder: / (root)
-#    Save. Esperá ~30s. URL: https://<user>.github.io/starcraft-arg/
+#    (ya hecho vía gh api POST /pages)
 
-# 3. Cookie Blizzard
-#    Abrí starcraft.blizzard.com/en-us/ en tu browser logueado
-#    DevTools → Network → click cualquier request → Request Headers → Cookie
-#    Copiá el valor completo de Cookie y pegá en archivo local:
-echo "session=e30=...; session.sig=...; locale=en_US" > ~/starcraft-arg/.blizzard-cookie
-chmod 600 ~/starcraft-arg/.blizzard-cookie
+# 3. Sin cookie file. MCP browser session maneja auth.
+#    Si MCP browser deslogueado: re-login manual + cookie extraído vía
+#    browser_run_code_unsafe (ver §Loop sequence paso 1).
 
 # 4. Validar antes del primer fetch
 make test           # 11/11 deben pasar
 make render         # regenera index.html desde JSON actual
-git add -A && git commit -m "initial commit"
+git add -A && git commit -m "validate setup"
 git push origin main
-
-# 5. Esperá 1-2 min, refrescá https://<user>.github.io/starcraft-arg/
-#    → debés ver la página renderizada con la paleta StarCraft
 ```
-
-**Sin estos pasos el loop es no-op perpetuo.** Cookie vacía → gate 404. Repo
-inexistente → git push falla. Pages no activado → site no sirve.
 
 ---
 
@@ -49,7 +39,6 @@ inexistente → git push falla. Pages no activado → site no sirve.
 ```
 data/transmissions.json     ← append-only, una entry por fetch nuevo
 .last-hash                  ← sha256 del último body visto (diff detection)
-.blizzard-cookie            ← cookie Blizzard session (gitignored)
 .fetch.log                  ← log cronológico (timestamp + evento)
 index.html                  ← regenerado por render.py (gitignored)
 ```
@@ -59,71 +48,51 @@ no editarlo a mano.
 
 ---
 
-## Loop sequence
+## Loop sequence (MCP browser path)
 
 ```
-1. fetch /en-us/partial-capture con Cookie de .blizzard-cookie
-2. sha256(body)
-3. sha == .last-hash ? → no-op silent
-4. body parseado con status != 200 ? → no-op silent (gated)
-5. append entry a data/transmissions.json (día actual, último bloque)
-6. update .last-hash
-7. python3 render.py  → regenera index.html
-8. git add -A && git commit -m "ARG: transmission {XX}"
+1. browser_run_code_unsafe: GET /en-us/partial-capture con Playwright MCP
+   - Si cookies expiraron en MCP browser → log "cookie expired", exit
+2. Parse JSON body
+3. Si data.messages vacío → gate (CONNECTION BREACHED u otro) → no-op, exit
+4. sha256(body) vs .last-hash
+   - Si igual → no change, no-op, exit
+5. Append entry a data/transmissions.json (día actual, último bloque)
+6. Update .last-hash
+7. python3 render.py → regenera index.html
+8. git add -A && git commit -m "ARG: transmission XX @ YYYY-MM-DD HH:MM UTC"
 9. NOT push (regla no-auto-push)
-10. append line a .fetch.log
+10. Append line a .fetch.log
 ```
 
 ---
 
-## Prompt (copy-paste para Claude o `/loop`)
+## Prompt (copy-paste para `/loop`)
 
 ```
-ARG_CHECK
+/loop 6h
 
-State read:
- - ~/starcraft-arg/.last-hash  (sha256 del último body)
- - ~/starcraft-arg/data/transmissions.json  (entries existentes)
+Use Playwright MCP browser_run_code_unsafe to GET
+https://starcraft.blizzard.com/en-us/partial-capture (browser session
+is authenticated). If MCP browser cookies expired, stop and report.
 
-Fetch:
- - GET https://starcraft.blizzard.com/en-us/partial-capture
- - Headers: Cookie de ~/starcraft-arg/.blizzard-cookie, Accept: application/json
+Parse JSON response. If data.messages is empty (gate: CONNECTION BREACHED
+or any other), exit silently.
 
-Diff:
- - sha256(body) vs .last-hash
- - Si igual → no-op. Exit.
- - Si body parsea con status != 200 o message != "CONNECTION SUCCESSFUL"
-   → no-op (gate activo). Exit.
+Else:
+  - sha256 of body. If equal to ~/starcraft-arg/.last-hash → exit silently.
+  - Append entry to ~/starcraft-arg/data/transmissions.json (today UTC):
+      {time: "HH:MM", type: "found", label: "transmission XX",
+       title: "Transmission XX — N mensajes",
+       body_html: "<pre class=\"memo\">...</pre>"}
+    Dedupe: skip if last entry has same label.
+  - Update .last-hash.
+  - python3 render.py (regenerate index.html).
+  - git add -A && git commit -m "ARG: transmission XX @ UTC".
+  - Append to ~/starcraft-arg/.fetch.log: "[ISO] NEW transmission XX".
+  - Report one line: "ARG: transmission XX · N mensajes".
 
-Append (solo si diff):
- - Localiza el day-block con date == today (UTC) en transmissions.json
- - Si no existe, crealo al final con open:true
- - Append entry:
-   {
-     "time": "HH:MM",                   // UTC HH:MM del momento
-     "type": "found",
-     "label": "transmission XX",
-     "title": "Transmission XX — {N} mensajes",
-     "body_html": "<pre class=\"memo\">{texto decoded de messages[0..N]}</pre>"
-   }
- - Deduplica: si la última entry tiene el mismo label, no append
- - Update transmissions.json (preservar indent 2, ensure_ascii=False)
-
-Write:
- - .last-hash = nuevo sha256
- - python3 render.py   (regenera index.html desde JSON)
- - git add -A && git commit -m "ARG: transmission XX @ YYYY-MM-DD HH:MM UTC"
-
-Log:
- - Append a .fetch.log:
-   "[ISO] NEW transmission XX"  o  "[ISO] no change"  o  "[ISO] gated"
-
-Output al chat:
- - Si new: "ARG: transmission XX · {N} mensajes"
- - Si no change: (silencio)
- - Si gated/error: "ARG: gate activo (cookie expirada o IP bloqueada)"
-
-EXIT.
+Never git push. Report to chat.
 ```
 
 ---
@@ -134,8 +103,8 @@ EXIT.
 |---|---|---|
 | Diff nuevo | `[ts] NEW transmission XX` | `ARG: transmission XX · N mensajes` |
 | Sin cambio | `[ts] no change` | (silencio) |
-| Gate (404) | `[ts] gated` | `ARG: gate activo` |
-| Cookie expirada | `[ts] cookie expired` | `ARG: cookie expirada — renová .blizzard-cookie` |
+| Gate (BREACHED, etc.) | `[ts] gated` | (silencio) |
+| Cookie MCP expirada | `[ts] cookie expired` | `ARG: cookie expirada — re-login en browser` |
 | Network error | `[ts] network: {error}` | `ARG: network error` |
 | Render falló | `[ts] render failed` | `ARG: render failed — revisar transmissions.json` |
 | Git commit failed | `[ts] git commit failed` | (commit local igual queda) |
@@ -148,8 +117,8 @@ EXIT.
 
 | Failure | Causa probable | Recovery |
 |---|---|---|
-| Gate 404 persistente | Cookie Blizzard expiró (~30 días) | Re-login en browser, exportar Cookie header nueva, reemplazar `.blizzard-cookie` |
-| Network timeout | Blizzard caído o rate-limit | Reintentar próxima corrida |
+| Gate persistente (BREACHED) | Cookie MCP expiró o IP bloqueada | Re-login en MCP browser; alternar `make fetch` con cookie file |
+| Network timeout | Blizzard caído o rate-limit | Reintentar próxima wake |
 | Render.py crash | JSON corrupto o entry malformada | `python3 -c "import json; json.load(open('data/transmissions.json'))"` para validar; restaurar desde `git log -- data/transmissions.json` |
 | Git commit fail | Permisos o branch protection | `git status` para diagnosticar; el diff queda en working tree |
 | transmission number stale | Endpoint rota el `transmission` field | Si transmisión no es `"01"` ni `"02"`, documentar cambio |
@@ -166,6 +135,7 @@ EXIT.
 - **NO especular** sobre lore sin evidencia del endpoint
 - **NO romper schema** JSON — `transmissions.json` debe parsear
 - **NO skip render.py** — siempre regenerar index.html después de append
+- **NO usar cron** — solo `/loop`
 
 ---
 
@@ -193,39 +163,26 @@ Resultados ambiguos → `~/starcraft-arg/.probes.log`.
 
 ---
 
-## Cron usage
-
-```cron
-0 */6 * * * cd ~/starcraft-arg && /usr/bin/python3 arg_fetch.py >> .fetch.log 2>&1
-```
-
-Cada 6h. Blizzard rota lento. Menos = OK. Más = ruido sin valor.
-
-Loop más frecuente solo si transmission XX está cambiando en tiempo real
-(detectable por cambios de sha256 entre corridas).
-
----
-
 ## Files
 
 ```
-arg_fetch.py            ← implementación (entry point)
+arg_fetch.py            ← fallback headless (urllib + cookie file)
 data/transmissions.json ← SSOT append-only
 render.py               ← JSON → HTML
 template.html           ← CSS + skeleton
 index.html              ← output (regenerado)
 tests/test_decode.py    ← unit decoder
 tests/test_render.py    ← JSON schema + render idempotente
-Makefile                ← make test/render/fetch/push/serve
+Makefile                ← make test/render/fetch/commit/serve/clean/ci
 .git/hooks/pre-push     ← corre tests antes de push
 .github/workflows/ci.yml ← CI GitHub Actions
+systemprompt.md         ← este archivo (loop spec)
 ```
 
 ---
 
 ## Honestidad
 
-- Cookie Blizzard expira → loop falla silent hasta renovar
-- Sin cookie válida → endpoint siempre gated, loop nunca appends
+- MCP browser cookie expira → loop falla silent hasta re-login
 - Si Blizzard decide cerrar ARG → loop no-op perpetuo, .fetch.log crece sin entradas
 - Si querés saber "qué pasó en la última semana", `tail .fetch.log`

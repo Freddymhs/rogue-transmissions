@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""arg_fetch.py — fetch /partial-capture, decode, append to data/transmissions.json.
+"""arg_fetch.py — headless fallback for fetching /partial-capture.
+
+Primary fetch path is Playwright MCP browser (browser session is authenticated).
+This script is the alternative for cron/manual runs without MCP: requires a
+.Blizzard cookie file at .blizzard-cookie (gitignored).
 
 Idempotent: same hash → no-op. Different hash → append entry + regenerate index.html.
 NEVER pushes to git (regla no-auto-push). Just commits locally for user to review.
@@ -14,6 +18,17 @@ COOKIE_FILE = DIR / ".blizzard-cookie"
 LOG_FILE = DIR / ".fetch.log"
 
 ENDPOINT = "https://starcraft.blizzard.com/en-us/partial-capture"
+
+
+def utc_now(fmt: str) -> str:
+    """Current UTC time formatted with strftime pattern."""
+    return datetime.now(timezone.utc).strftime(fmt)
+
+
+def git_commit(message: str, cwd: pathlib.Path) -> None:
+    """Stage all + commit. Never pushes (regla no-auto-push)."""
+    subprocess.run(["git", "add", "-A"], cwd=cwd, check=False)
+    subprocess.run(["git", "commit", "-m", message], cwd=cwd, check=False)
 
 
 def decode_binary(binary: str) -> str:
@@ -48,18 +63,20 @@ def fetch_endpoint(cookie: str) -> str:
 def parse_messages(payload: str) -> dict | None:
     """Extract transmission + messages from the response payload.
 
-    Returns None if the response is the 404 gate.
+    Returns None if the response is gated (no messages in data, regardless
+    of inner status/message — server signals gate via empty data).
     """
     try:
         j = json.loads(payload)
     except json.JSONDecodeError:
         return None
-    if j.get("status") != 200 or j.get("message") != "CONNECTION SUCCESSFUL":
-        return None
     data = j.get("data") or {}
+    messages = data.get("messages") or []
+    if not messages:
+        return None  # gate (CONNECTION BREACHED, empty data, etc.)
     return {
         "transmission": data.get("transmission"),
-        "messages": data.get("messages") or [],
+        "messages": messages,
     }
 
 
@@ -71,8 +88,8 @@ def append_entry(messages: list, transmission: str) -> bool:
     if not DATA.exists():
         raise FileNotFoundError(DATA)
     data = json.loads(DATA.read_text(encoding="utf-8"))
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    now = datetime.now(timezone.utc).strftime("%H:%M")
+    today = utc_now("%Y-%m-%d")
+    now = utc_now("%H:%M")
 
     decoded_msgs = []
     for m in messages:
@@ -173,11 +190,10 @@ def main() -> int:
         return 1
 
     # Local commit only — never push (regla no-auto-push)
-    subprocess.run(["git", "add", "-A"], cwd=DIR, check=False)
-    subprocess.run([
-        "git", "commit", "-m",
-        f"ARG: transmission {parsed['transmission']} @ {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC",
-    ], cwd=DIR, check=False)
+    git_commit(
+        f"ARG: transmission {parsed['transmission']} @ {utc_now('%Y-%m-%d %H:%M')} UTC",
+        cwd=DIR,
+    )
     log("committed locally (no push)")
     return 0
 

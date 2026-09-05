@@ -5,7 +5,7 @@ La página oficial expone transmissions clasificadas del Terran Dominion cuando
 el cliente tiene sesión Blizzard activa. Acá las capturamos, las decodificamos
 y las publicamos como lore.
 
-**Sitio en vivo:** https://fmarcosdev.github.io/starcraft-arg/ _(pendiente: crear repo + activar Pages)_
+**Sitio en vivo:** https://freddymhs.github.io/rogue-transmissions/
 
 ---
 
@@ -15,7 +15,7 @@ y las publicamos como lore.
 data/transmissions.json    ← SSOT append-only (data)
 template.html              ← CSS + skeleton HTML
 render.py                  ← JSON + template → index.html
-arg_fetch.py               ← fetch /partial-capture + decode + append
+arg_fetch.py               ← fetch /partial-capture + decode + append (fallback)
 tests/                     ← unit + integration tests
 index.html                 ← output (regenerado por render.py)
 ```
@@ -26,41 +26,36 @@ acá, después `make render` regenera `index.html`.
 ## Workflow local
 
 ```bash
-# una vez
 make test           # corre tests
 make render         # regenera index.html
-
-# loop continuo (manual o cron)
-make fetch          # fetch + decode + append + commit (NO push)
-
-# antes de pushear
-make test           # valida todo
-make push           # vos decidís cuándo
+make fetch          # fetch + decode + append + commit local (NO push)
+make serve          # preview local en http://localhost:8000
 ```
 
-## Setup inicial
+## Fetch — primario vs fallback
 
-1. **Cookie Blizzard** — exportar la cookie de sesión desde DevTools:
-   - Abrí `starcraft.blizzard.com/en-us/`
-   - DevTools → Network → `partial-capture` → Request Headers → copiá `Cookie:`
-   - Pegá en `~/starcraft-arg/.blizzard-cookie` (gitignored)
+**Primario** (recomendado): Playwright MCP browser.
+MCP session ya está autenticada en Blizzard, así que alcanza con
+`browser_run_code_unsafe` apuntando a `/partial-capture`. Sin cookie file.
 
-2. **Repo + GitHub Pages:**
-   ```bash
-   cd ~/starcraft-arg
-   git remote add origin git@github.com:fmarcosdev/starcraft-arg.git
-   git push -u origin main
-   ```
-   Settings → Pages → Branch: `main`, folder: `/`.
+**Fallback** (`make fetch`): `arg_fetch.py` corre standalone con `urllib`.
+Requiere `~/starcraft-arg/.blizzard-cookie` con cookies Blizzard
+(extraído vía DevTools). Útil para cron/headless cuando MCP no disponible.
 
-3. **Cron opcional** (Mac Mini):
-   ```cron
-   0 */6 * * * cd ~/starcraft-arg && /usr/bin/python3 arg_fetch.py >> .fetch.log 2>&1
-   ```
+## Loop con `/loop` de Claude Code
+
+```bash
+/loop 6h Use Playwright MCP browser_run_code_unsafe to GET
+https://starcraft.blizzard.com/en-us/partial-capture.
+Parse JSON. If data.messages is non-empty: append to
+~/starcraft-arg/data/transmissions.json (today UTC), python3 render.py,
+git add -A, git commit -m "ARG: ..." (no push).
+Report outcome one line or silent if gated.
+```
 
 ## Reglas
 
-- **No auto-push** — vos revisás commits locales y pusheás manual
+- **No auto-push** — vos revisás commits locales y `git push origin main` manual
 - **Sin análisis técnico en el doc** — solo lore + mystery
 - **Hipótesis tagged "generada por IA"** — explícito en el render
 - **Append-only** — entries previas no se editan

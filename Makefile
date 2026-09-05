@@ -1,4 +1,4 @@
-.PHONY: test render fetch commit push serve clean
+.PHONY: test render fetch commit serve clean
 
 # Run unit + integration tests
 test:
@@ -12,19 +12,10 @@ render:
 fetch:
 	python3 arg_fetch.py
 
-# Same as fetch but bypasses tests (for scheduled runs)
-fetch-fast:
-	python3 arg_fetch.py
-
 # Local commit of any pending changes (no push)
 commit:
 	git add -A
 	git commit -m "manual update" || true
-
-# Push to GitHub — REQUIRES user confirmation; rule no-auto-push
-push:
-	@echo "Manual push only. Confirm: git push origin main"
-	@git push origin main
 
 # Serve locally for preview
 serve:
