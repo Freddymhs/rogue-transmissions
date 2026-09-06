@@ -339,6 +339,19 @@ S. V█████
 </div>
   </div>
 </details>
+<details class="day" open>
+  <summary>
+    <span class="day-date">2026-09-06</span>
+    <span class="day-meta">1 entrada</span>
+  </summary>
+  <div class="log">
+    <div class="note found">
+  <div class="when"><span>10:00</span><span class="badge found">hallazgo #7</span></div>
+  <h3>localStorage ya no se escribe — sesión sin auth (dataLayer authenticated=0)</h3>
+  <p>Cache-bypass aplicado (storage vaciado + 0 SWs + navigate <code>?_=1788688851081</code>) → esperar 8s + 5s → inspeccionar:</p><ul class="tight"><li><strong><code>localStorage</code> = <code>{}</code></strong> — clave <code>internal-node-trace</code> ausente, contra runs previas que la tenían poblada con timestamp del último poll (06:30:24Z: <code>1788645653077</code>; 22:16:16Z: presente).</li><li><code>fetch('/es-es/internal-node-trace')</code> manual desde page context → 200 + body 56 bytes + sha256 <code>4f6a2d4932dbc1...</code> (idéntico) — pero el código de polling que escribe el timestamp no se disparó.</li><li><strong>dataLayer <code>authenticated:&quot;0&quot;</code></strong> + <code>document.cookie</code> sin sesión battle.net visible (auth en HttpOnly). <code>window.blz.authenticated</code> = false.</li><li><strong>Poll count = 2</strong> (307+200, 307+200) vs 20+ en runs previas con cache-bypass y auth activa.</li><li>DOM sigue landing pública estándar (INFINITOS FRENTES, INFINITOS ENEMIGOS — marketing). 0 transmission elements, 0 canvas, 0 overlay.</li><li>VT323 sigue preloaded (hallazgo #5 confirmado en esta run: <code>&lt;link rel=&quot;preload&quot; as=&quot;style&quot; href=&quot;fonts.googleapis.com/css2?family=VT323&quot;&gt;</code>).</li><li>Endpoint body sin cambios: <code>{&quot;status&quot;:404,&quot;message&quot;:&quot;CONNECTION BREACHED&quot;,&quot;data&quot;:{}}</code>.</li></ul><p class="note-inline">El flujo <code>trace → cache local</code> que hallazgo #4 documentaba como "comportamiento esperado" ahora está roto en esta sesión. Correlaciona 100% con <code>authenticated=0</code>: probable que el handler de polling/Storage sea auth-gated. Implicancia: las próximas runs podrían perder la lectura de <code>internal-node-trace</code> hasta que la sesión Playwright se re-autentique (la cookie battle.net no se persiste entre invocaciones de browser MCP).</p>
+</div>
+  </div>
+</details>
 <!-- END_DAYS -->
 
 <section>
