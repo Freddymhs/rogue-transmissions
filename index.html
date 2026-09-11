@@ -182,7 +182,7 @@
 
 <header>
   <h1>★ StarCraft: Remastered ARG · Bitácora</h1>
-  <div class="sub">endpoint <code>/en-us/partial-capture</code> · transmission <span id="transmission">01</span></div>
+  <div class="sub">endpoint <code>/en-us/partial-capture</code> · transmission <span id="transmission">04</span></div>
 </header>
 
 <!-- BEGIN_DAYS -->
@@ -354,6 +354,296 @@ S. V█████
   <div class="when"><span>13:32:24</span><span class="badge found">anomalía infra</span></div>
   <h3>internal-node-trace: polling detenido + localStorage write removido</h3>
   <p>Cache-bypass aplicado (storage vaciado + 0 SWs + navigate <code>?_=1788701544872</code>) + esperar 13s:</p><ul class="tight"><li><strong>Endpoint body sin cambios</strong>: <code>{"status":404,"message":"CONNECTION BREACHED","data":{}}</code> · HTTP 200</li><li><strong>Polling <em>DETENIDO</em></strong>: <code>performance.getEntries</code> reporta <strong>solo 1 hit</strong> a <code>internal-node-trace</code> en t=662ms (redirect 307 + 200 consolidado en un único resource entry). Runs previos documentaban 20+ polls durante load → <strong>el cliente JS que disparaba el polling fue removido o deshabilitado</strong>.</li><li><strong>localStorage[<code>internal-node-trace</code>] = <code>null</code></strong>: la key con timestamp del último poll (presente en runs 2026-09-05 22:16 y anteriores) <strong>ya no se escribe</strong>. Solo persiste <code>_gcl_ls</code>.</li><li><strong>sessionStorage</strong>: solo <code>com.grafana.faro.lastNavigationId</code> (sin cambios — telemetría estándar).</li><li><strong>DOM</strong>: sin términos ARG. <code>txElements=1</code> = <code>ot-optout-signal ot-hide</code> (OneTrust cookie consent), template artifact.</li><li><strong>VT323</strong> sigue preloaded pero unused (warning de Chrome).</li></ul><p class="note">Implicancia: el endpoint <code>/es-es/internal-node-trace</code> sigue vivo y respondiendo el mismo cuerpo, pero el front-end dejó de polearlo y de persistir el último timestamp. Es comportamiento <em>degradado</em> del observability/heartbeat — el endpoint ya no cumple su rol original de "presence pulse" del ARG infra.</p>
+</div>
+  </div>
+</details>
+<details class="day" open>
+  <summary>
+    <span class="day-date">2026-09-11</span>
+    <span class="day-meta">9 entradas · transmission 04</span>
+  </summary>
+  <div class="log">
+    <div class="note plain">
+  <div class="when"><span>17:03</span><span class="badge ">arranque</span></div>
+  <p>Captura sobre <code class="url">starcraft.blizzard.com/es-es</code>. Transmission <strong>04</strong>, cinco mensajes.</p>
+</div>
+    <div class="note found">
+  <div class="when"><span>17:03</span><span class="badge found">hallazgo #7</span></div>
+  <h3>Endpoint ARG migrado a /conflicting-records</h3>
+  <p>El endpoint interno ARG ya no es <code>/es-es/internal-node-trace</code> (que en captura del 2026-09-05 devolvía <code>CONNECTION BREACHED</code>). Ahora la página hace <strong>dos requests</strong>: primero <code>/conflicting-records</code> (responde 307) y luego <code>/es-es/conflicting-records</code> que en la <strong>primera llamada</strong> post-carga entrega la transmission 04 completa. Llamadas subsiguientes devuelven el <code>CONNECTION BREACHED</code> de 56 bytes.</p><p>Es decir: el ARG deja caer la conexión después de entregar el paquete, igual que hace StarCraft con el UI cuando se cortan las comunicaciones.</p><p class="note-inline">Endpoint renombrado. Infra ARG sigue activa pero con nombre distinto.</p>
+</div>
+    <div class="note found">
+  <div class="when"><span>17:03</span><span class="badge found">hallazgo #8</span></div>
+  <h3>Nuevo campo metadata: signal04Name</h3>
+  <p>El response JSON trae un campo nuevo en <code>data</code>:</p><pre class="json">"signal04Name": "Official Dominion Transcript"</pre><p>El response también trae un <code>signal04Redacted</code> con un SCI Incident Report completo de <strong>VEIL IX LUNAR MINING COMPLEX</strong> (72 casualties, 2575-07-15). Esto sugiere que cada transmission puede traer su propio bloque metadata además de los mensajes.</p><p class="note-inline">El campo <code>signal04Name</code> parece un "título oficial" dado por el ARG para clasificar la transmission — "Official Dominion Transcript" implica que estamos leyendo documentos oficiales del Dominion Terran, no transmisiones interceptadas.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>17:03</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 000623 — sensor 7400 EAST (re-run)</h3>
+  <pre class="sensor">&gt;SENSOR FEED: 7400_EAST
+&gt;MOTION DETECTED
+&gt;FREQUENCY: TRANSIENT MOTION PATTERN
+&gt;OCCUPANTS REGISTERED ...... 0
+&gt;OCCUPANTS DETECTED ........ 14
+&gt;RECONCILING...
+&gt;OCCUPANTS REGISTERED ...... 0
+&gt;POWER: DEACTIVATED (POWER GRID: 2%)</pre><pre class="memo">FROM:    1SG S████████ V█████
+SENT:    2575-08-08-2601:18
+TO:      ROXARA LUNAR MINING COMPLEX — OPERATIONS
+SUBJECT: ███ THETA SQUADRON — ARRIVAL PROTOCOL
+
+ATTN. ROXARA LUNAR MINING COMPLEX,
+
+Theta Squadron is en route, anticipate arrival to Roxara on
+2575-08-09-███████. A ███████████████ Freighter will arrive
+in advance of Theta Squadron. Prepare docking accommodations.
+
+Our work must begin immediately upon landing. Ensure cargo
+manifest below is on board the ███████████████ Freighter.
+Failure to indicate inconsistencies will not be tolerated.
+
+Take the utmost caution when handling the crates. They are
+pivotal to our research. Any carelessness or mistreatment
+could jeopardize the success of our operation.
+
+For the Glory of the ████████.
+
+S. V█████
+12974-S</pre><p class="note-inline">Mismo sensor 7400_EAST que la transmission 01 — 14 detectados, 0 registrados, red al 2%. Memo de Theta Squadron casi idéntico, dos cambios mínimos: <em>"A ███████████████ Freighter will arrive"</em> (sin "of"), y la línea sobre las cajas ahora habla en plural: <em>"They are pivotal"</em>. Versión revisada del mismo memo.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>17:03</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 001089 — sensor 9200 WEST y la conversación de los crates</h3>
+  <pre class="sensor">&gt;SENSOR FEED: 9200_WEST
+&gt;MOTION DETECTED
+&gt;FREQUENCY: TRANSIENT MOTION PATTERN
+&gt;OCCUPANTS REGISTERED ...... 0
+&gt;OCCUPANTS DETECTED ........ 102
+&gt;RECONCILING...
+&gt;OCCUPANTS REGISTERED...... 0
+&gt;POWER: DEACTIVATED (POWER GRID: 1%)</pre><pre class="memo">DATE OF TRANSMISSION: 2575-08-09-███████
+
+9230042-WG: We need you down here. Now.
+2560037-DA: What's going on? I'm with the ███ team.
+9230042-WG: Great, bring one of them with you so they can explain
+            what the **** they put in these crates.
+2560037-DA: No need for language. Just tell me what's going on.
+9230042-WG: These crates are moving. The seals are intact, but
+            the sensors keep switching between "empty" and weight
+            readouts that change every couple seconds.
+9230042-WG: I recalibrated the sensors myself, but it keeps
+            happening. I get they don't need to tell us everything,
+            but I need to know if there's something dangerous or
+            alive in these crates.
+2560037-DA: Understood. I'll speak with V█████. For now, keep
+            on with business as usual.
+9230042-WG: It sounds like ******* ████, man. The screeching and
+            scratching. Sometimes sounds far away, sometimes
+            sounds close.
+2560037-DA: There are no ████ on Roxara. Just hang tight, I
+            will find you as soon as I know more.
+9230042-WG: Copy that.
+
+&gt;ENTRY LOGGED .............. CARGO DOCK ██
+&gt;USER 9230042-WG LOCATION ... RLMC SHIPPING AND RECEIVING
+&gt;DISCREPANCY FLAGGED
+&gt;DISCREPANCY CLEARED BY: ████████ OVERRIDE
+
+&gt;Signal: lost.
+&gt;Transmission record... ERROR
+
+[[RECORD NOT FOUND]]
+[[RECORD RESTORED]]
+[[RECORD NOT FOUND]]</pre><p class="note-inline"><strong>102 ocupantes detectados</strong> en 9200_WEST (vs 14 en 7400_EAST). Y por primera vez alguien (9230042-WG) reporta lo que está pasando: <em>"the sensors keep switching between empty and weight readouts that change every couple seconds"</em>. Las cajas pesan diferente en cada lectura. Hay chillidos y arañazos. La respuesta del oficial: <em>"There are no ████ on Roxara"</em>. El <em>DISCREPANCY CLEARED BY: ████████ OVERRIDE</em> sugiere que alguien con autoridad borró el reporte — pero el transmission quedó interceptado igual.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>17:03</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 001998 — D. Alvarez aparece + misión de Theta + última transmission de Keri Parker</h3>
+  <pre class="memo">&gt;&gt;CRITICALLY IMPORTANT
+&gt;&gt;THEY'RE ONTO ME.
+&gt;&gt;QUESTION EVERYTHING YOU SEE.
+&gt;&gt;READ BETWEEN THE LINES.
+&gt;&gt;D. ALVAREZ</pre><pre class="memo">MISSION SURVEY
+ORDERS 556-217
+2575-08-12-2509:42
+
+TARGET: ROXARA, SECTOR █
+OPERATIVES: R. E███████, S. V█████, M. C███, T. C███, E. M███████, W. G███, F. R█████████.
+
+&gt;CIVILIAN POPULATION ........... 92
+&gt;CIVILIAN POPULATION ........... 391
+&gt;CIVILIAN POPULATION ........... 570
+&gt;CIVILIAN POPULATION ........... 1610
+&gt;CIVILIAN POPULATION ........... ERROR
+&gt;CIVILIAN POPULATION ........... CAP EXCEEDED</pre><pre class="memo">[[WARNING]]
+[[ROXARA LUNAR MINING COMPLEX — REFUGE BAY LINE]]
+[[EMERGENCY TRANSMISSION INCOMING]]
+
+RLMC, DRIFT 4600-South ... This is Keri Parker. 30 miners and I
+are now trapped.
+
+RLMC, DRIFT 4600-South ... Doors weakening. Seal light is green for now.
+
+RLMC, DRIFT 4600-South ... DOORS BREACHED. DOZENS OF THEM. ████ —
+IT HAS TO BE ████.
+
+RLMC, DRIFT 4600-South ... HUXLEY AND NGUYEN ARE DOWN. THEY'RE COMING
+FOR ALL OF US.
+
+RLMC, DRIFT 4600-South ... ALVAREZ! ANYONE! SEND ████████████████████████████</pre><p class="note-inline">Aparece un nombre nuevo: <strong>D. ALVAREZ</strong> — un whistle-blower interno del Dominion que está extrayendo documentos. La <em>MISSION SURVEY</em> lista 7 operatives de Theta Squadron con iniciales y nombres parciales. Y por último el audio más dramático del ARG hasta ahora: <strong>Keri Parker</strong>, geóloga/minera, atrapada con 30 mineros en Drift 4600-South. Su transmission se degrada conforme hablan — el sello se rompe, entran "decenas" de algo, Huxley y Nguyen caen, y la última línea es un grito a Alvarez. Si 000623 era el protocolo de llegada, 001998 es lo que pasó después.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>17:03</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 003795 — los Incident Reports: CANDORE, ABADDON, VEIL IX, ROXARA</h3>
+  <pre class="memo">████████ SCIENCE CORPS
+INCIDENT INFORMATION REPORT
+
+REPORTING PERSONNEL ... S. V█████ — ███ — THETA SQUADRON
+LOCATION OF INCIDENT ... VEIL IX LUNAR MINING COMPLEX
+DATE AND TIME INFORMATION RECEIVED ... 2575-07-1512:07
+
+TYPE OF INCIDENT: DESTRUCTIVE AND UNCONTROLLED BURNING WITH CASUALTIES
+
+     WHAT: 72 CASUALTIES AS RESULT OF UNCONTROLLED BURN IN VEIL IX
+
+&gt;&gt;THEY'RE DOING IT RIGHT IN FRONT OF OUR EYES.
+&gt;&gt;AND THEY THINK WE WON'T NOTICE.
+
+████████ SCIENCE CORPS
+INCIDENT INFORMATION REPORT — SPECIAL ACCESS ONLY
+LOCATION OF INCIDENT ... VEIL IX
+
+     WHAT: 2,000 CASUALTIES AS RESULT OF ██████████████████ ATTACK IN VEIL IX
+
+     WHY: █████████████████ EXPERIMENT AND CONTAINMENT FAILED.
+
+&gt;&gt;THEY'VE DONE IT BEFORE.
+&gt;&gt;THEY'LL DO IT AGAIN.
+
+████████ SCIENCE CORPS
+INCIDENT INFORMATION REPORT — SPECIAL ACCESS ONLY
+LOCATION OF INCIDENT ... ROXARA
+
+     WHAT: 4,983 CASUALTIES RESULTING FROM ██████████████████ ATTACK IN ROXARA.
+     WHY: █████████████████ EXPERIMENT FAILED, ALONG WITH CONTAINMENT EFFORTS.
+
+&gt;&gt;NOTICE THE PATTERN.
+&gt;&gt;SEE THROUGH THEIR LIES.
+
+████████ SCIENCE CORPS
+INCIDENT INFORMATION REPORT — SPECIAL ACCESS ONLY
+LOCATION OF INCIDENT ... CANDORE
+
+     WHAT: 8,176 CASUALTIES RESULTING FROM ██████████████████ ATTACK IN CANDORE.
+
+&gt;&gt;IT'S BEEN GOING ON TOO LONG.
+&gt;&gt;THEY WILL NOT STOP.
+
+████████ SCIENCE CORPS
+INCIDENT INFORMATION REPORT — SPECIAL ACCESS ONLY
+LOCATION OF INCIDENT ... ABADDON
+
+     WHAT: 1,476 CASUALTIES RESULTING FROM ██████████████████ ATTACK IN ABADDON.
+     WHY: FAILED EXPERIMENT AND CONTAINMENT EFFORTS RELATING TO █████████████████.</pre><p class="note-inline">Reportes oficiales del Terran Dominion Science Corps — pero Alvarez (que los interceptó) dejó caer mensajes entre ellos: <em>"THEY'RE DOING IT RIGHT IN FRONT OF OUR EYES"</em>, <em>"THEY'VE DONE IT BEFORE"</em>, <em>"NOTICE THE PATTERN"</em>, <em>"THEY WILL NOT STOP"</em>. Los números reales: <strong>72 + 2.000 + 114 + 4.983 + 8.176 + 1.476 = 16.821 casualties</strong> documentados entre las 6 colonias. <em>HOW</em> siempre es <em>"unstable mining conditions and gas leak"</em>. <em>WHY</em> siempre apunta a un experimento fallido de contención. La tapadera oficial es incendio de mina/gas leak. Alvarez dice que es otra cosa.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>17:03</span><span class="badge ">contenido</span></div>
+  <h3>OPORD ███████ · "Project Spellbind Intent" — N. BLACKWELL</h3>
+  <pre class="memo">OPORD ███████
+█████████████████
+
+SITUATION
+     a. Areas of Interest ... Candore, Abaddon, Zaldross, Sorona,
+        ████████████████████████████████ Veil IX, Roxara, Ebys,
+        Hektar, and ████████
+
+     b. Area of Operations ... Theta Squadron, Delta Squadron,
+        Gamma Squadron, and Lambda Squadron are to inspect these
+        settlements and root out any dissenters or hostiles.
+
+     c. Enemy Forces ... ████████ hostiles. Count uncertain,
+        estimates at around 470,000 across ████████ Space.
+
+     d. Civil Considerations ... Spare all resources. Do not damage
+        infrastructure where possible.
+
+     e. Mission ... O/O, Theta Squadron, Delta Squadron, Gamma
+        Squadron, and Lambda Squadron are to ensure the domestic
+        integrity of Candore, Abaddon, Zaldross, Sorona, ███████
+        ██████████████████████████████████ Veil IX, Roxara, Ebys,
+        Hektar, and ███████. In the event of hostile attacks,
+        respond with force.
+
+     f. Execution
+          a. Project Spellbind Intent ... To ensure the domestic
+             integrity, safety, and well-being of the ████████.
+             In the event of hostile attacks, this will be
+             accomplished by conducting a combination of Offensive
+             and Defensive operations across targeted settlements.
+          b. Key Tasks ...
+               - Learn operations on respective settlements to
+                 minimize impact on production
+               - Root out dissenters, hostiles, and terrorists
+                 — A dissenter is a terrorist in training.
+                 ██Eliminate any and all threat to ████████
+               - Re-establish ████████ control over settlements
+          c. End State ... All trace of hostile or terroristic
+             threats to the ████████ are eliminated. Squadrons are
+             not cleared for leave until every threat has been
+             handled to the fullest extent.
+
+For the Glory of the Dominion.
+
+N. BLACKWELL
+██</pre><p class="note-inline">Operation Order oficial firmado por <strong>N. BLACKWELL</strong>. <strong>4 escuadrones</strong> (Theta, Delta, Gamma, Lambda) desplegados sobre <strong>10 colonias</strong>. <strong>470.000 hostiles estimados</strong> en todo el espacio Dominion. La tapadera oficial es <em>"domestic integrity"</em> y <em>"anti-terror operations"</em>. <em>"A dissenter is a terrorist in training"</em> — frase textual del OPORD. Firmado <em>"For the Glory of the Dominion"</em>, igual que el memo de Theta Squadron. <em>Project Spellbind Intent</em> es el nombre en clave.</p>
+</div>
+    <div class="note plain">
+  <div class="when"><span>17:03</span><span class="badge ">contenido</span></div>
+  <h3>Mensaje 006214 — el mensaje final de D. Alvarez</h3>
+  <pre class="memo">&gt;&gt;I don't have long.
+&gt;&gt;Accessing this relay will lead them here. They're closing
+&gt;&gt;every route behind me.
+&gt;&gt;But we all deserve to know the truth.
+&gt;&gt;The "mine fires" aren't fires.
+&gt;&gt;Systems are being overridden. Files whitewashed. People discarded.
+&gt;&gt;They're killing us, and they won't stop until they get what they're after.
+&gt;&gt;Roxara wasn't the first. But I hope we can be the last.
+&gt;&gt;Every file I open has already been opened. By me. Timestamped ahead.
+&gt;&gt;The logs are filling faster than I can read them.
+
+&gt;&gt;REMEMBER THE PEOPLES SACRIFICED IN THE NAME OF ████████ GREED:
+
+&gt;&gt;CANDORE
+&gt;&gt;ABADDON
+&gt;&gt;ZALDROSS
+&gt;&gt;SORONA
+██████
+█████████
+███████████
+███████
+&gt;&gt;VEIL IX
+&gt;&gt;ROXARA
+
+&gt;&gt;Read everything. Trust nothing.
+
+&gt;TRANSMISSION... UNSTABLE
+&gt;CONNECTION... LOST</pre><pre class="medical">███████: T. W███████
+DATE: 2575-08-1409:28
+BLOOD PRESSURE: --
+HEART RATE: --
+RESPIRATORY RATE: --
+BODY TEMPERATURE: --
+OXYGEN SATURATION: --
+STATUS: DECEASED. VIABILITY FAILURE.
+
+███████: E. B████
+DATE: 2575-08-1309:57
+BLOOD PRESSURE: --
+HEART RATE: --
+RESPIRATORY RATE: --
+BODY TEMPERATURE: --
+OXYGEN SATURATION: --
+STATUS: DECEASED. VIABILITY FAILURE.</pre><p class="note-inline"><strong>D. Alvarez habla por última vez.</strong> Lo más fuerte de toda la transmission: <em>"The mine fires aren't fires"</em>. Los incendios de las minas no son incendios — son experimentos fallidos de contención, encubiertos como accidentes. La lista de colonias sacrificadas: <strong>CANDORE, ABADDON, ZALDROSS, SORONA, [cuatro nombres tachados], VEIL IX, ROXARA</strong>. Y los registros médicos de T. W y E. B después del mensaje: <em>DECEASED. VIABILITY FAILURE.</em> Sin presión, sin pulso, sin temperatura, sin saturación — y <em>STATUS: DECEASED</em>. Alvarez sabe que lo están rastreando: <em>"Every file I open has already been opened. By me. Timestamped ahead"</em>. Los logs del sistema muestran timestamps del futuro. El ARG completo es un <em>whistle-blower dump</em>: alguien dentro del Dominion que decidió sacar todo antes de que lo silenciaran.</p>
 </div>
   </div>
 </details>
