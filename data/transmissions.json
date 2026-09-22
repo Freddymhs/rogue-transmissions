@@ -216,6 +216,20 @@
           "body_html": "<p>Hallazgo #5 (2026-09-05 21:50) documentaba VT323 <em>preloaded pero unused</em>. En este run <strong>4 elementos del DOM usan VT323 activamente</strong> como <code>font-family</code> computado:</p><ul class=\"tight\"><li><code>_p4cr-resist-title</code> — &quot;Security Authentication Required&quot;</li><li><code>_p4cr-resist-field-label</code> — &quot;AUTH BYPASS:&quot;</li><li><code>_p4cr-resist-input-text</code> (placeholder del input)</li><li><code>_p4cr-resist-submit-text</code> — &quot;Submit&quot;</li></ul><p>La font retro-terminal está asociada exclusivamente al <em>auth bypass</em>. Si la tapadera del ARG es <em>hackear el Dominion terminal</em>, este es el primer elemento del UI diseñado como <em>terminal screen</em>, no como marketing retro.</p><p class=\"note-inline\">Cambio de comportamiento confirmado: el warning de Chrome \"preloaded unused\" del hallazgo #5 ya no dispara para estos 4 elementos — están <em>renderizados con VT323</em>, no solo <em>armados en el DOM</em>.</p>"
         }
       ]
+    },
+    {
+      "date": "2026-09-22",
+      "open": true,
+      "transmission": null,
+      "entries": [
+        {
+          "time": "10:00",
+          "type": "found",
+          "label": "hallazgo #12",
+          "title": "VT323 desapareció completamente del DOM (regresión total)",
+          "body_html": "<p>El hallazgo #11 (2026-09-21 20:34 UTC) documentaba VT323 <strong>activo</strong>: 4 elementos del modal ARG (<code>_p4cr-resist-title</code>, <code>_p4cr-resist-field-label</code>, <code>_p4cr-resist-input-text</code>, <code>_p4cr-resist-submit-text</code>) usaban VT323 como <code>font-family</code> computado.</p><p>En este run (2026-09-22 10:00 UTC) <strong>VT323 no aparece en ningún lado</strong>:</p><ul class=\"tight\"><li><code>document.fonts</code> contiene 59 fuentes cargadas — <strong>0</strong> son VT323 (filter <code>/VT323/i</code>).</li><li>Búsqueda en <code>document.styleSheets[*].cssRules</code> — <strong>0</strong> reglas CSS contienen <code>VT323</code>.</li><li>Walk de <code>document.querySelectorAll('*')</code> con <code>getComputedStyle().fontFamily</code> — <strong>0</strong> elementos tienen VT323 en su <code>font-family</code>.</li></ul><p>El modal <code>_p4cr-modal</code> ya no se renderiza (snapshot del DOM no contiene ningún elemento con prefijo <code>_p4cr-</code>). La página vuelve a ser marketing estándar — solo el story copy \"DEFIENDE A LA HUMANIDAD\" + cards de Remastered/II + footer social.</p><p class=\"note-inline\">Regresión total: el UI ARG entero (modal, auth bypass, fonts terminal) fue desmontado entre 20:34 UTC del 2026-09-21 y 10:00 UTC del 2026-09-22 (~13.5h). Posibles lecturas: (1) el ARG rotó de fase y la próxima iteración viene con otro namespace; (2) el UI se está sirviendo condicional por horario/geolocalización y este run no aplicó; (3) el ARG terminó. <code>localStorage[\"conflicting-records\"]</code> sigue con timestamp stale <code>1789158663361</code> (no se escribió nuevo poll).</p>"
+        }
+      ]
     }
   ],
   "mystery": [
